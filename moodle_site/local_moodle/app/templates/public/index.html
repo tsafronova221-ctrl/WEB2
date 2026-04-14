@@ -1,0 +1,19 @@
+<h3>Сдача Лабораторной Работы</h3>
+{% if error %}
+    <h1 style="color: red">{{ error }}</h1>
+{% endif %}
+<form method="post" action="/start">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    <input name="last_name" placeholder="Фамилия">
+    <input name="first_name" placeholder="Имя">
+    <select name="group_id">
+    <option value="" disabled selected>Выберите группу</option>
+        {% for g in groups %}
+        <option value="{{ g.id }}">{{ g.name }}</option>
+        {% endfor %}
+    </select>
+    <input name="password" placeholder="Пароль">
+    <button type="submit">Начать</button>
+</form>
+
+<hr>
