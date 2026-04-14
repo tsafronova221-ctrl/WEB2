@@ -1,0 +1,396 @@
+﻿<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ lab.title }}</title>
+    <style> body {
+        font-family: sans-serif;
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 0 20px;
+    }
+
+    .alert {
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+
+    .alert-info {
+        background: #e7f3fe;
+        border: 1px solid #b6d4fe;
+        color: #084298;
+    }
+
+    .alert-warning {
+        background: #fff3cd;
+        border: 1px solid #ffecb5;
+        color: #664d03;
+    }
+
+    .alert-danger {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+    }
+
+    .question-box {
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 5px;
+    }
+
+    .timer-box {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background: #2c3e50;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        font-size: 18px;
+        font-weight: bold;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        z-index: 1000;
+    }
+
+    .timer-box.warning {
+        background: #e74c3c;
+        animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+    }
+
+    .violations-panel {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        background: #f8d7da;
+        color: #721c24;
+        padding: 10px 15px;
+        border-radius: 8px;
+        font-size: 14px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        z-index: 1000;
+        display: none;
+    }
+    </style>
+</head>
+<body>
+<div id="timerBox" class="timer-box" style="display: none;">
+    ⏱️ Осталось: <span id="timeRemaining">00:00</span>
+</div>
+
+<div id="violationsPanel" class="violations-panel">
+    ⚠️ Нарушения: <span id="violationsCount">0</span> переключений вкладок
+</div>
+
+<h2>{{ lab.title }}</h2>
+
+{% if lab.is_test %}
+    <div class="alert alert-warning">
+        <strong>Режим контрольной работы!</strong><br>
+        Включено отслеживание нарушений. Не переключайтесь на другие вкладки и не копируйте текст.
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        Это лабораторная работа. Необходимо ответить на все вопросы.
+    </div>
+{% endif %}
+
+<p>Скачайте файл задания:</p>
+<a href="{{ url_for('files', file_path=lab_file.file_path) }}" download>📥 Скачать файл задания</a>
+<hr>
+
+<form method="post" action="/finish/{{ attempt.id }}" id="quizForm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    {% for q in questions %}
+        <div class="question-box">
+            <p><b>Вопрос {{ loop.index }}:</b> {{ q.text }}</p>
+            <input type="text" name="q{{ q.id }}" style="width: 100%; padding: 8px;" placeholder="Ваш ответ"
+                   autocomplete="off" required>
+        </div>
+    {% endfor %}
+    <br>
+    <button type="submit"
+            style="padding: 10px 20px; cursor: pointer; background: #28a745; color: white; border: none; border-radius: 5px; font-size: 16px;">
+        Завершить работу
+    </button>
+</form>
+
+<script>
+// === ТАЙМЕР И ЗАЩИТА ОТ СПИСЫВАНИЯ ===
+(function() {
+    const labIsTest = {{ 'true' if lab.is_test else 'false' }};
+    const testDurationMinutes = {{ lab.test_duration or 0 }};
+    const attemptId = {{ attempt.id }};
+    
+    // Проверяем, передал ли сервер оставшееся время (при обновлении страницы)
+    const serverRemainingTime = {{ remaining_time if remaining_time is defined else 'null' }};
+    
+    // Серверное время начала попытки (в миллисекундах)
+    const serverStartTime = {{ attempt.started_at.timestamp() * 1000 }};
+    
+    // Ключи для localStorage
+    const violationsKey = 'attempt_' + attemptId + '_violations';
+    const remainingTimeKey = 'attempt_' + attemptId + '_remaining';
+    
+    let tabSwitchCount = 0;
+    let copyDetected = false;
+    let fullscreenExitCount = 0;
+    let remainingSeconds = 0;
+    
+    // Получение elapsed времени в секундах (от серверного времени начала)
+    function getElapsedTime() {
+        return Math.floor((Date.now() - serverStartTime) / 1000);
+    }
+    
+    // Инициализация оставшегося времени
+    function initRemainingTime() {
+        if (serverRemainingTime !== null) {
+            // Сервер передал актуальное оставшееся время (первый заход или обновление после проверки на сервере)
+            remainingSeconds = serverRemainingTime;
+            // Сохраняем в localStorage для последующих обновлений
+            localStorage.setItem(remainingTimeKey, JSON.stringify({
+                value: remainingSeconds,
+                timestamp: Date.now()
+            }));
+        } else {
+            // Пытаемся получить из localStorage (при обновлении страницы без перезагрузки сервера)
+            const saved = localStorage.getItem(remainingTimeKey);
+            if (saved) {
+                const data = JSON.parse(saved);
+                const elapsedSinceSave = Math.floor((Date.now() - data.timestamp) / 1000);
+                remainingSeconds = Math.max(0, data.value - elapsedSinceSave);
+            } else {
+                // Первый запуск - берем полное время
+                remainingSeconds = testDurationMinutes * 60;
+            }
+        }
+    }
+    
+    // Форматирование времени MM:SS
+    function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+    }
+    
+    // Сохранение нарушений
+    function saveViolations() {
+        localStorage.setItem(violationsKey, JSON.stringify({
+            tabSwitches: tabSwitchCount,
+            copy: copyDetected,
+            fullscreenExits: fullscreenExitCount
+        }));
+    }
+    
+    // Обновление таймера
+    function updateTimer() {
+        if (!labIsTest || testDurationMinutes <= 0) return;
+        
+        // Уменьшаем оставшееся время каждую секунду
+        if (remainingSeconds > 0) {
+            remainingSeconds--;
+        }
+        
+        // Сохраняем текущее состояние в localStorage
+        localStorage.setItem(remainingTimeKey, JSON.stringify({
+            value: remainingSeconds,
+            timestamp: Date.now()
+        }));
+        
+        const timerBox = document.getElementById('timerBox');
+        const timeDisplay = document.getElementById('timeRemaining');
+        
+        if (remainingSeconds <= 0) {
+            // Время истекло - автоматически отправляем форму через AJAX для сохранения нарушений
+            timerBox.classList.add('warning');
+            timeDisplay.textContent = '00:00';
+            alert('Время вышло! Работа будет автоматически завершена.');
+            
+            // Вызываем функцию автозавершения с сохранением нарушений
+            submitViolationsAndFinish(true);
+            return;
+        }
+        
+        timerBox.style.display = 'block';
+        timeDisplay.textContent = formatTime(remainingSeconds);
+        
+        // Предупреждение за 5 минут до конца
+        if (remainingSeconds <= 300) {
+            timerBox.classList.add('warning');
+        }
+    }
+    
+    // Отслеживание переключений вкладок
+    function trackTabSwitches() {
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden && labIsTest) {
+                tabSwitchCount++;
+                saveViolations();
+                updateViolationsDisplay();
+                
+                // Показываем предупреждение
+                const violationsPanel = document.getElementById('violationsPanel');
+                violationsPanel.style.display = 'block';
+                setTimeout(() => {
+                    violationsPanel.style.display = 'none';
+                }, 3000);
+            }
+        });
+        
+        window.addEventListener('blur', function() {
+            if (labIsTest) {
+                tabSwitchCount++;
+                saveViolations();
+                updateViolationsDisplay();
+            }
+        });
+    }
+    
+    // Отслеживание копирования
+    function trackCopy() {
+        document.addEventListener('copy', function(e) {
+            if (labIsTest) {
+                copyDetected = true;
+                saveViolations();
+                
+                const violationsPanel = document.getElementById('violationsPanel');
+                violationsPanel.innerHTML = '⚠️ Обнаружено копирование!';
+                violationsPanel.style.display = 'block';
+                setTimeout(() => {
+                    violationsPanel.innerHTML = '⚠️ Нарушения: <span id="violationsCount">0</span> переключений вкладок';
+                    violationsPanel.style.display = 'none';
+                }, 3000);
+            }
+        });
+    }
+    
+    // Обновление отображения нарушений
+    function updateViolationsDisplay() {
+        const violationsCount = document.getElementById('violationsCount');
+        if (violationsCount) {
+            violationsCount.textContent = tabSwitchCount;
+        }
+        const panel = document.getElementById('violationsPanel');
+        if (tabSwitchCount > 0 && labIsTest) {
+            panel.style.display = 'block';
+        }
+    }
+    
+    // Полноэкранный режим (опционально)
+    function trackFullscreen() {
+        document.addEventListener('fullscreenchange', function() {
+            if (!document.fullscreenElement && labIsTest) {
+                fullscreenExitCount++;
+                saveViolations();
+            }
+        });
+    }
+    
+    // Попытка запросить полноэкранный режим
+    function requestFullscreen() {
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen().catch(err => {
+                // Браузер заблокировал, это нормально
+            });
+        }
+    }
+    
+    if (labIsTest) {
+        // Инициализируем оставшееся время
+        initRemainingTime();
+        
+        trackTabSwitches();
+        trackCopy();
+        trackFullscreen();
+        requestFullscreen();
+        
+        // Запускаем таймер
+        updateTimer();
+        setInterval(updateTimer, 1000);
+        
+        // Показываем панель нарушений если есть данные
+        const savedViolations = localStorage.getItem(violationsKey);
+        if (savedViolations) {
+            const v = JSON.parse(savedViolations);
+            tabSwitchCount = v.tabSwitches || 0;
+            copyDetected = v.copy || false;
+            fullscreenExitCount = v.fullscreenExits || 0;
+            updateViolationsDisplay();
+        }
+    }
+    
+    // Отправка данных о нарушениях на сервер при завершении
+    function submitViolationsAndFinish(isAutoFinish) {
+        if (!labIsTest) return true;
+        
+        // Создаем FormData для отправки через fetch
+        const formData = new FormData();
+        formData.append('violation_tab_switch', tabSwitchCount);
+        formData.append('violation_copy', copyDetected ? '1' : '0');
+        formData.append('violation_fullscreen_exit', fullscreenExitCount);
+        
+        const finishUrl = isAutoFinish ? `/auto-finish/${attemptId}` : `/finish/${attemptId}`;
+        
+        // Отправляем данные через fetch (для автозавершения) или просто возвращаем true (для обычной формы)
+        if (isAutoFinish) {
+            return fetch(finishUrl, {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+              .then(data => {
+                  console.log('Auto-finish result:', data);
+                  // Очищаем localStorage
+                  localStorage.removeItem(violationsKey);
+                  localStorage.removeItem(remainingTimeKey);
+                  // Перенаправляем на страницу результатов
+                  window.location.href = `/finish/${attemptId}`;
+              })
+              .catch(error => {
+                  console.error('Error during auto-finish:', error);
+                  // В случае ошибки все равно перенаправляем
+                  window.location.href = `/finish/${attemptId}`;
+              });
+        }
+        
+        return true;
+    }
+    
+    document.getElementById('quizForm').addEventListener('submit', function(e) {
+        if (labIsTest) {
+            // Добавляем скрытые поля с данными о нарушениях
+            const hiddenTabSwitches = document.createElement('input');
+            hiddenTabSwitches.type = 'hidden';
+            hiddenTabSwitches.name = 'violation_tab_switch';
+            hiddenTabSwitches.value = tabSwitchCount;
+            this.appendChild(hiddenTabSwitches);
+            
+            const hiddenCopy = document.createElement('input');
+            hiddenCopy.type = 'hidden';
+            hiddenCopy.name = 'violation_copy';
+            hiddenCopy.value = copyDetected ? '1' : '0';
+            this.appendChild(hiddenCopy);
+            
+            const hiddenFullscreen = document.createElement('input');
+            hiddenFullscreen.type = 'hidden';
+            hiddenFullscreen.name = 'violation_fullscreen_exit';
+            hiddenFullscreen.value = fullscreenExitCount;
+            this.appendChild(hiddenFullscreen);
+            
+            // Очищаем localStorage
+            localStorage.removeItem(violationsKey);
+            localStorage.removeItem(remainingTimeKey);
+        }
+    });
+})();
+</script>
+</body>
+</html>
