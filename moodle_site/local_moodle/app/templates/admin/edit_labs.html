@@ -387,6 +387,7 @@
         </div>
         <div class="card-body">
             <form id="labForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="row g-3">
                 <div class="col-md-8">
                     <div class="mb-3">
@@ -963,10 +964,14 @@
             }))
         };
         
+        // Добавляем CSRF токен в заголовки
+        const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
+        
         fetch('./create_lab', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json;charset=utf-8',
+                    'X-CSRFToken': csrfToken,
                 },
                 body: JSON.stringify(labData),
             })
