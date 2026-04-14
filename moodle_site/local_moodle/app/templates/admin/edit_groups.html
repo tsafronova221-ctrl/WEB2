@@ -235,6 +235,7 @@
         </div>
         <div class="card-body">
             <form id="addGroupForm" onsubmit="return validateForm()">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="mb-3">
                     <label for="groupName" class="form-label">Название группы <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" id="groupName" name="group_name" required
@@ -374,7 +375,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json;charset=utf-8',
-                    {#'X-CSRFToken': '{{ csrf_token() }}'  // Добавьте CSRF токен для безопасности#}
+                    'X-CSRFToken': document.querySelector('input[name="csrf_token"]')?.value || ''
                 },
                 body: JSON.stringify({'name': groupName, 'size': groupSize}),
             })
@@ -503,6 +504,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json;charset=utf-8',
+                    'X-CSRFToken': document.querySelector('input[name="csrf_token"]')?.value || ''
                 },
                 body: JSON.stringify({'name': groupName}),
             })

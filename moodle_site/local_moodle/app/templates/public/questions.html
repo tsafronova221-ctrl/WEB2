@@ -337,6 +337,11 @@
         formData.append('violation_tab_switch', tabSwitchCount);
         formData.append('violation_copy', copyDetected ? '1' : '0');
         formData.append('violation_fullscreen_exit', fullscreenExitCount);
+        // Добавляем CSRF токен из формы
+        const csrfToken = document.querySelector('input[name="csrf_token"]')?.value;
+        if (csrfToken) {
+            formData.append('csrf_token', csrfToken);
+        }
         
         const finishUrl = isAutoFinish ? `/auto-finish/${attemptId}` : `/finish/${attemptId}`;
         
@@ -344,7 +349,10 @@
         if (isAutoFinish) {
             return fetch(finishUrl, {
                 method: 'POST',
-                body: formData
+                body: formData,
+                headers: {
+                    'X-CSRFToken': csrfToken || ''
+                }
             }).then(response => response.json())
               .then(data => {
                   console.log('Auto-finish result:', data);

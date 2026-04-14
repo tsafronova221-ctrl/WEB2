@@ -10,3 +10,4 @@ class Config:
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
     WTF_CSRF_ENABLED = True
+    WTF_CSRF_TIME_LIMIT = None  # Отключаем истечение CSRF токенов по времени
