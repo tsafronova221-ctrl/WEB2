@@ -11,13 +11,6 @@ USERS = {
 }
 
 
-@login_manager.user_loader
-def load_user(username):
-    if username in USERS:
-        return SimpleUser(username)
-    return None
-
-
 class SimpleUser(UserMixin):
     def __init__(self, username):
         self.id = username
