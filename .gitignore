@@ -21,7 +21,7 @@ wheels/
 .installed.cfg
 *.egg
 
-# Virtual Environment
+# Virtual environments
 venv/
 ENV/
 env/
@@ -32,26 +32,19 @@ venv.bak/
 # Database
 instance/app.db
 
-# Logs
-*.log
+# Environment variables
+.env
+.env.local
+.env.*
 
 # IDE
 .vscode/
 .idea/
 
+# Logs
+*.log
+
 # OS
 .DS_Store
 Thumbs.db
-
-# Environment variables
-.env
-.env.local
-*.env.*
-
-# Coverage
-.coverage
-htmlcov/
-.coverage.*
-.coverage.xml
-coverage.xml
 ```
