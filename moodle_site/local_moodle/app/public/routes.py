@@ -264,13 +264,24 @@ def start():
 
     db.session.commit()
 
-    return render_template(
-        "public/questions.html",
-        attempt=attempt,
-        lab_file=lab_file,
-        questions=selected_questions,
-        lab=lab
-    )
+    # Для контрольных работ передаем начальное время и длительность
+    if lab.is_test and lab.test_duration:
+        return render_template(
+            "public/questions.html",
+            attempt=attempt,
+            lab_file=lab_file,
+            questions=selected_questions,
+            lab=lab,
+            remaining_time=lab.test_duration * 60  # Конвертируем минуты в секунды
+        )
+    else:
+        return render_template(
+            "public/questions.html",
+            attempt=attempt,
+            lab_file=lab_file,
+            questions=selected_questions,
+            lab=lab
+        )
 
 
 @public_bp.route("/finish/<int:attempt_id>", methods=["POST"])

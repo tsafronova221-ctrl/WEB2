@@ -15,6 +15,8 @@
     var labIsTest = CONFIG.isTest || false;
     var testDurationMinutes = CONFIG.duration || 0;
     var attemptId = CONFIG.attemptId || 0;
+    var serverStartTime = CONFIG.serverStartTime || Date.now();
+    var remainingTime = CONFIG.remainingTime || null;
 
     if (!labIsTest) return;
 
@@ -29,7 +31,9 @@
         fullscreenExits: 0,
         trackingActive: false,
         initialLoadComplete: false,
-        lastHeartbeat: Date.now()
+        lastHeartbeat: Date.now(),
+        timeRemaining: 0,
+        timerInterval: null
     };
 
     function saveViolations() {
@@ -50,6 +54,64 @@
         var mins = Math.floor(seconds / 60);
         var secs = seconds % 60;
         return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+    }
+
+    function updateTimerDisplay() {
+        var timerBox = document.getElementById('timerBox');
+        var timeRemainingSpan = document.getElementById('timeRemaining');
+        
+        if (!timerBox || !timeRemainingSpan) return;
+        
+        if (_state.timeRemaining <= 0) {
+            timeRemainingSpan.textContent = '00:00';
+            timerBox.classList.add('warning');
+            return;
+        }
+        
+        timeRemainingSpan.textContent = formatTime(_state.timeRemaining);
+        
+        if (_state.timeRemaining <= 60) {
+            timerBox.classList.add('warning');
+        } else {
+            timerBox.classList.remove('warning');
+        }
+    }
+
+    function startTimer() {
+        var timerBox = document.getElementById('timerBox');
+        if (!timerBox) return;
+        
+        timerBox.style.display = 'block';
+        
+        if (remainingTime !== null) {
+            _state.timeRemaining = remainingTime;
+        } else if (testDurationMinutes > 0) {
+            var elapsedSeconds = Math.floor((Date.now() - serverStartTime) / 1000);
+            var totalSeconds = testDurationMinutes * 60;
+            _state.timeRemaining = Math.max(0, totalSeconds - elapsedSeconds);
+        } else {
+            return;
+        }
+        
+        updateTimerDisplay();
+        
+        _state.timerInterval = setInterval(function() {
+            if (_state.timeRemaining > 0) {
+                _state.timeRemaining--;
+                updateTimerDisplay();
+                
+                if (_state.timeRemaining <= 0) {
+                    clearInterval(_state.timerInterval);
+                    setTimeout(function() {
+                        alert('Время вышло! Работа будет завершена автоматически.');
+                        var quizForm = document.getElementById('quizForm');
+                        if (quizForm) {
+                            quizForm.submit();
+                        }
+                    }, 500);
+                }
+            }
+        }, 1000);
     }
 
     function sendHeartbeat() {
@@ -258,6 +320,7 @@
         requestFullscreen();
         
         updateViolationsDisplay();
+        startTimer();
 
         var quizForm = document.getElementById('quizForm');
         if (quizForm) {
