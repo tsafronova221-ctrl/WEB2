@@ -1,6 +1,6 @@
 ﻿import random
 
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify
 from app import db
 from app.models import (
     Student,
@@ -16,11 +16,35 @@ from app.models import (
 from app.security import generate_watermark_hash
 from datetime import datetime
 import pytz
+import json
+import base64
 
 # Часовой пояс Москвы
 MSK = pytz.timezone('Europe/Moscow')
 
 public_bp = Blueprint("public", __name__)
+
+
+@public_bp.route("/anticheat-heartbeat/<int:attempt_id>", methods=["POST"])
+def anticheat_heartbeat(attempt_id):
+    """Endpoint для получения периодических данных о нарушениях от клиента"""
+    attempt = Attempt.query.get_or_404(attempt_id)
+    
+    # Если попытка уже завершена - игнорируем
+    if attempt.finished_at is not None:
+        return jsonify({'status': 'ignored', 'reason': 'attempt_finished'})
+    
+    # Получаем данные из JSON запроса
+    data = request.get_json() or {}
+    
+    # Обновляем нарушения в базе данных при каждом heartbeat
+    if attempt.lab.is_test:
+        attempt.violation_tab_switch = max(attempt.violation_tab_switch, data.get('t', 0))
+        attempt.violation_copy = attempt.violation_copy or (data.get('c', 0) == 1)
+        attempt.violation_fullscreen_exit = max(attempt.violation_fullscreen_exit, data.get('f', 0))
+        db.session.commit()
+    
+    return jsonify({'status': 'ok', 'timestamp': datetime.now(MSK).isoformat()})
 
 
 @public_bp.route("/")
@@ -240,18 +264,12 @@ def start():
 
     db.session.commit()
 
-    # Вычисляем оставшееся время для новой попытки
-    remaining_seconds = None
-    if lab.is_test and lab.test_duration and lab.test_duration > 0:
-        remaining_seconds = lab.test_duration * 60
-
     return render_template(
         "public/questions.html",
         attempt=attempt,
         lab_file=lab_file,
         questions=selected_questions,
-        lab=lab,
-        remaining_time=remaining_seconds
+        lab=lab
     )
 
 
@@ -260,13 +278,10 @@ def finish(attempt_id):
     attempt = Attempt.query.get_or_404(attempt_id)
     
     # === ЗАЩИТА ОТ ПОВТОРНОЙ ОТПРАВКИ И ПОДДЕЛКИ ДАННЫХ ===
-    # Проверяем, что попытка принадлежит текущему студенту и еще не завершена
     if attempt.finished_at is not None:
-        # Попытка уже завершена - показываем страницу результатов без правильных ответов
         results_list = []
         for answer_record in attempt.answers:
             q = answer_record.question
-            # Показываем только текст вопроса, без информации о правильности
             results_list.append(['neutral', q.text])
         
         return render_template("public/finish.html", attempt=attempt, answers=results_list)
@@ -274,15 +289,31 @@ def finish(attempt_id):
     
     # ===== СОХРАНЕНИЕ ДАННЫХ О НАРУШЕНИЯХ =====
     if attempt.lab.is_test:
-        # Получаем данные о нарушениях из формы
-        tab_switches = request.form.get('violation_tab_switch', 0, type=int)
-        copy_detected = request.form.get('violation_copy', '0') == '1'
-        fullscreen_exits = request.form.get('violation_fullscreen_exit', 0, type=int)
+        # Получаем данные о нарушениях из формы (последняя отправка)
+        tab_switches_form = request.form.get('violation_tab_switch', 0, type=int)
+        copy_detected_form = request.form.get('violation_copy', '0') == '1'
+        fullscreen_exits_form = request.form.get('violation_fullscreen_exit', 0, type=int)
         
-        # Сохраняем в базу данных
-        attempt.violation_tab_switch = tab_switches
-        attempt.violation_copy = copy_detected
-        attempt.violation_fullscreen_exit = fullscreen_exits
+        # Получаем данные из heartbeat (накопленные за все время)
+        tab_switches_server = attempt.violation_tab_switch or 0
+        copy_detected_server = attempt.violation_copy or False
+        fullscreen_exits_server = attempt.violation_fullscreen_exit or 0
+        
+        # Используем МАКСИМУМ из того что пришло с формы и того что накопилось на сервере
+        # Это защита от манипуляций с localStorage и подмены данных при отправке
+        attempt.violation_tab_switch = max(tab_switches_form, tab_switches_server)
+        attempt.violation_copy = copy_detected_form or copy_detected_server
+        attempt.violation_fullscreen_exit = max(fullscreen_exits_form, fullscreen_exits_server)
+        
+        # Проверяем client_state_hash на валидность (если есть)
+        client_hash = request.form.get('client_state_hash', '')
+        if client_hash:
+            try:
+                decoded = json.loads(base64.b64decode(client_hash).decode('utf-8'))
+                # Если хэш декодировался - это хорошо, значит клиент не совсем "глупый"
+                # Но мы все равно используем серверные данные как приоритетные
+            except:
+                pass  # Если не декодировалось - просто игнорируем
     # ========================================
     
     lab_file_id = attempt.password.file_id
