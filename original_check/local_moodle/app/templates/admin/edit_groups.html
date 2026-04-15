@@ -1,0 +1,606 @@
+{% extends "admin/base.html" %}
+
+{% block styles %}
+<style>
+    /* Общие стили для страницы */
+    .container {
+        max-width: 1200px;
+    }
+
+    /* Карточки */
+    .card {
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-header {
+        font-weight: 600;
+        border-top-left-radius: 10px !important;
+        border-top-right-radius: 10px !important;
+    }
+
+    /* Кнопки */
+    .btn {
+        transition: all 0.3s ease;
+        border-radius: 6px;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        border: none;
+    }
+
+    .btn-success:hover {
+        background-color: #218838;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        border: none;
+    }
+
+    .btn-secondary:hover {
+        background-color: #5a6268;
+        transform: translateY(-1px);
+    }
+
+    .btn-warning {
+        background-color: #ffc107;
+        border: none;
+        color: #212529;
+    }
+
+    .btn-warning:hover {
+        background-color: #e0a800;
+        transform: translateY(-1px);
+    }
+
+    .btn-danger {
+        background-color: #dc3545;
+        border: none;
+    }
+
+    .btn-danger:hover {
+        background-color: #c82333;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+    }
+
+    /* Формы */
+    .form-label {
+        font-weight: 500;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control {
+        border-radius: 6px;
+        border: 1px solid #ced4da;
+        padding: 0.6rem 1rem;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .form-control:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    /* Таблица */
+    .table {
+        border-collapse: separate;
+        border-spacing: 0 5px;
+        margin-bottom: 0;
+    }
+
+    .table thead th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        color: #495057;
+        border-bottom: 2px solid #dee2e6;
+        padding: 0.75rem;
+    }
+
+    .table tbody tr {
+        background-color: white;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: translateX(5px);
+    }
+
+    .table td, .table th {
+        vertical-align: middle;
+        padding: 0.75rem 1rem;
+    }
+
+    /* Пустое состояние таблицы */
+    .text-center.text-muted {
+        padding: 2rem;
+        font-style: italic;
+        color: #6c757d;
+    }
+
+    /* Ошибки валидации */
+    .text-danger {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #dc3545 !important;
+    }
+
+    /* Анимации */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-in {
+        animation: fadeIn 0.3s ease forwards;
+    }
+
+    /* Респонсивность */
+    @media (max-width: 768px) {
+        .table-responsive {
+            font-size: 0.9rem;
+        }
+
+        .table td, .table th {
+            padding: 0.5rem 0.75rem;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .card-body {
+            padding: 1rem;
+        }
+    }
+
+    /* Заголовки */
+    h1 {
+        font-weight: 700;
+        color: #212529;
+        margin-bottom: 1.5rem;
+        position: relative;
+        padding-bottom: 0.5rem;
+    }
+
+    h1::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 60px;
+        height: 3px;
+        background-color: #007bff;
+        border-radius: 2px;
+    }
+
+    /* Действия в таблице */
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .action-buttons button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 32px;
+        height: 32px;
+        padding: 0;
+    }
+
+    /* Визуальная обратная связь */
+    .group-added {
+        background-color: #d4edda;
+        border-left: 4px solid #28a745;
+    }
+
+    .group-highlight {
+        animation: highlight 2s ease;
+    }
+
+    @keyframes highlight {
+        0% { background-color: #fff3cd; }
+        50% { background-color: #ffeeba; }
+        100% { background-color: transparent; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Управление учебными группами</h1>
+
+    <!-- Форма добавления новой группы -->
+    <div class="card mb-4 fade-in">
+        <div class="card-header bg-primary text-white">
+            <h2 class="h5 mb-0">Добавить новую группу</h2>
+        </div>
+        <div class="card-body">
+            <form id="addGroupForm" onsubmit="return validateForm()">
+                <div class="mb-3">
+                    <label for="groupName" class="form-label">Название группы <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="groupName" name="group_name" required
+                           placeholder="КВ-20-04, КПМ-25-01"
+                           oninput="validateGroupName()">
+                    <div id="nameError" class="text-danger mt-1" style="display: none;"></div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="groupSize" class="form-label">Количество студентов (необязательно)</label>
+                    <input type="number" class="form-control" id="groupSize" name="group_size" min="1"
+                           placeholder="25">
+                    <small class="form-text text-muted">Укажите общее количество студентов в группе</small>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-plus me-1"></i> Добавить группу
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                        <i class="fas fa-redo me-1"></i> Очистить
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Список существующих групп -->
+    <div class="card fade-in" style="animation-delay: 0.1s;">
+        <div class="card-header bg-info text-white">
+            <h2 class="h5 mb-0">Список учебных групп</h2>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th class="w-10">№</th>
+                            <th class="w-40">Название группы</th>
+                            <th class="w-25">Количество студентов</th>
+                            <th class="w-25">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="groupsTableBody">
+                        {% if not groups %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">
+                                <i class="fas fa-users fa-2x mb-2"></i>
+                                <p class="mb-0">Пока нет учебных групп</p>
+                                <p class="mb-0 small text-muted">Добавьте первую группу с помощью формы выше</p>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% for group in groups %}
+                        <tr class="fade-in" style="animation-delay: {{ loop.index * 0.05 }}s;">
+                            <td class="fw-bold">{{ loop.index }}</td>
+                            <td class="fw-bold text-primary">{{ group.name }}</td>
+                            <td>
+                                {% if group.size > 0 %}
+                                    <span class="badge bg-success">{{ group.size }}</span>
+                                {% else %}
+                                    <span class="text-muted">Не указано</span>
+                                {% endif %}
+                            </td>
+                            <td class="action-buttons">
+                                <button class="btn btn-sm btn-warning" title="Редактировать" onclick="editGroup(this)">
+                                    <i class="fas fa-edit"></i>✏️
+                                </button>
+                                <button class="btn btn-sm btn-danger" title="Удалить" onclick="deleteGroup(this)">
+                                    <i class="fas fa-trash-alt"></i>🗑️
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Проверка формата названия группы
+    function validateGroupName() {
+        const groupName = document.getElementById('groupName').value.trim();
+        const nameError = document.getElementById('nameError');
+
+        // Регулярное выражение для формата: 2-3 буквы, дефис, 2 цифры, дефис, 2 цифры
+        const pattern = /^[А-Яа-яЁёA-Za-z]{2,3}-\d{2}-\d{2}$/;
+
+        if (groupName === '') {
+            nameError.style.display = 'none';
+            return true;
+        }
+
+        if (!pattern.test(groupName)) {
+            nameError.textContent = 'Неверный формат! Пример: КВ-20-04 или КПМ-25-01';
+            nameError.style.display = 'block';
+            return false;
+        } else {
+            nameError.style.display = 'none';
+            return true;
+        }
+    }
+
+    // Валидация всей формы
+    function validateForm() {
+        const groupName = document.getElementById('groupName').value.trim();
+        const nameError = document.getElementById('nameError');
+
+        if (groupName === '') {
+            nameError.textContent = 'Название группы обязательно для заполнения';
+            nameError.style.display = 'block';
+            return false;
+        }
+
+        return validateGroupName();
+    }
+
+    // Очистка формы
+    function resetForm() {
+        document.getElementById('groupName').value = '';
+        document.getElementById('groupSize').value = '';
+        document.getElementById('nameError').style.display = 'none';
+        document.getElementById('groupName').focus();
+    }
+
+    // Добавление группы
+    document.getElementById('addGroupForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        if (validateForm()) {
+            const groupName = document.getElementById('groupName').value.trim();
+            const groupSize = document.getElementById('groupSize').value.trim() || -1;
+
+            fetch('./add_group', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json;charset=utf-8',
+                    {#'X-CSRFToken': '{{ csrf_token() }}'  // Добавьте CSRF токен для безопасности#}
+                },
+                body: JSON.stringify({'name': groupName, 'size': groupSize}),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Добавление в таблицу
+                    addToTable(groupName, groupSize);
+
+                    // Очистка формы
+                    resetForm();
+                } else {
+                    showNotification(data.error || 'Ошибка при добавлении группы', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Произошла ошибка при добавлении группы', 'danger');
+            });
+        }
+    });
+
+    // Функция для добавления/обновления группы в таблице
+    function addToTable(name, size) {
+        const tableBody = document.getElementById('groupsTableBody');
+        const isEmpty = tableBody.querySelector('tr td[colspan]');
+
+        // Если таблица пустая, очищаем placeholder
+        if (isEmpty) {
+            tableBody.innerHTML = '';
+        }
+
+        // Проверяем, существует ли уже группа с таким названием
+        const existingRows = tableBody.querySelectorAll('tr');
+        let groupExists = false;
+        let updatedRow = null;
+
+        existingRows.forEach(row => {
+            const groupNameCell = row.cells[1];
+            if (groupNameCell && groupNameCell.textContent.trim() === name) {
+                groupExists = true;
+                updatedRow = row;
+            }
+        });
+
+        if (groupExists && updatedRow) {
+            // Обновляем существующую группу
+            const sizeCell = updatedRow.cells[2];
+
+            // Обновляем количество студентов
+            if (size > 0) {
+                sizeCell.innerHTML = `<span class="badge bg-success">${size}</span>`;
+            } else {
+                sizeCell.innerHTML = '<span class="text-muted">Не указано</span>';
+            }
+
+            // Добавляем визуальную подсветку обновления
+            updatedRow.classList.add('flash-highlight');
+            setTimeout(() => {
+                updatedRow.classList.remove('flash-highlight');
+            }, 1500);
+
+            showNotification(`Группа ${name} обновлена`, 'info');
+        } else {
+            // Добавляем новую группу
+            const rowCount = existingRows.length + 1;
+
+            const row = document.createElement('tr');
+            row.className = 'fade-in flash-highlight';
+            row.style.animationDelay = '0s';
+            row.innerHTML = `
+                <td class="fw-bold">${rowCount}</td>
+                <td class="fw-bold text-primary">${name}</td>
+                <td>
+                    ${size > 0 ? `<span class="badge bg-success">${size}</span>` : '<span class="text-muted">Не указано</span>'}
+                </td>
+                <td class="action-buttons">
+                    <button class="btn btn-sm btn-warning" title="Редактировать" onclick="editGroup(this)">
+                        <i class="fas fa-edit"></i>✏️
+                    </button>
+                    <button class="btn btn-sm btn-danger" title="Удалить" onclick="deleteGroup(this)">
+                        <i class="fas fa-trash-alt"></i>🗑️
+                    </button>
+                </td>
+            `;
+
+            tableBody.appendChild(row);
+
+            // Прокрутка к таблице
+            setTimeout(() => {
+                tableBody.closest('.card').scrollIntoView({behavior: 'smooth', block: 'nearest'});
+            }, 300);
+
+            showNotification(`Группа ${name} успешно добавлена`, 'success');
+        }
+
+        // Обновляем нумерацию всех строк
+        updateRowNumbers();
+    }
+
+    // Функции для редактирования и удаления
+    function editGroup(button) {
+        const row = button.closest('tr');
+        const name = row.cells[1].textContent;
+        const sizeText = row.cells[2].textContent;
+        const size = sizeText.includes('Не указано') ? '' : sizeText.replace(/\D/g, '');
+
+        document.getElementById('groupName').value = name;
+        document.getElementById('groupSize').value = size;
+
+        // Прокрутка к форме
+        document.getElementById('addGroupForm').scrollIntoView({behavior: 'smooth', block: 'nearest'});
+
+        // Фокус на поле
+        setTimeout(() => {
+            document.getElementById('groupName').focus();
+        }, 300);
+    }
+
+    function deleteGroup(button) {
+        const row = button.closest('tr');
+        const groupName = row.cells[1].textContent;
+
+        if (confirm(`Вы уверены, что хотите удалить группу "${groupName}"?`)) {
+            fetch('./remove_group', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json;charset=utf-8',
+                },
+                body: JSON.stringify({'name': groupName}),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    row.classList.add('fade-out');
+
+                    setTimeout(() => {
+                        row.remove();
+                        updateRowNumbers();
+                        showNotification(`Группа ${groupName} удалена`, 'info');
+                    }, 300);
+                } else {
+                    showNotification(data.error || 'Ошибка при удалении группы', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Произошла ошибка при удалении группы', 'danger');
+            });
+        }
+    }
+
+    function updateRowNumbers() {
+        const rows = document.querySelectorAll('#groupsTableBody tr');
+        rows.forEach((row, index) => {
+            row.cells[0].textContent = index + 1;
+        });
+
+        // Если таблица пуста, показать сообщение
+        if (rows.length === 0) {
+            document.getElementById('groupsTableBody').innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center text-muted">
+                        <i class="fas fa-users fa-2x mb-2"></i>
+                        <p class="mb-0">Пока нет учебных групп</p>
+                        <p class="mb-0 small text-muted">Добавьте первую группу с помощью формы выше</p>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    // Показать уведомление
+    function showNotification(message, type) {
+        let alertType = 'alert-info';
+        let icon = 'fa-info-circle';
+
+        switch(type) {
+            case 'success':
+                alertType = 'alert-success';
+                icon = 'fa-check-circle';
+                break;
+            case 'danger':
+                alertType = 'alert-danger';
+                icon = 'fa-exclamation-circle';
+                break;
+            case 'warning':
+                alertType = 'alert-warning';
+                icon = 'fa-exclamation-triangle';
+                break;
+        }
+
+        const notification = document.createElement('div');
+        notification.className = `alert ${alertType} alert-dismissible fade show position-fixed bottom-0 end-0 m-3 shadow-sm`;
+        notification.style.zIndex = '9999';
+        notification.style.maxWidth = '400px';
+        notification.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="fas ${icon} me-2 fs-5"></i>
+                <div>${message}</div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+
+        document.body.appendChild(notification);
+
+        // Автоматическое скрытие через 5 секунд
+        setTimeout(() => {
+            notification.classList.remove('show');
+            notification.classList.add('fade');
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
+        }, 5000);
+    }
+
+    // Инициализация при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        // Добавить анимацию появления для существующих групп
+        const rows = document.querySelectorAll('#groupsTableBody tr');
+        rows.forEach((row, index) => {
+            row.style.animationDelay = `${index * 0.05}s`;
+        });
+
+        // Фокус на первое поле формы
+        document.getElementById('groupName').focus();
+    });
+</script>
+{% endblock %}
