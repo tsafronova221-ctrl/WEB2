@@ -1,0 +1,69 @@
+﻿<!DOCTYPE html>
+<html>
+<body>
+<style>
+    .answers {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-width: 400px;
+  font-family: sans-serif;
+}
+
+.answers li {
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  font-size: 16px;
+  background: #f3f3f3;
+  border: 1px solid #ddd;
+  position: relative;
+  transition: 0.2s;
+}
+
+/* Убираем цветовую индикацию для правильных и неправильных ответов */
+.answers li.correct, .answers li.wrong {
+  border-color: #ddd;
+  background: #f3f3f3;
+}
+
+.answers li.correct::before, .answers li.wrong::before {
+  content: "";
+  margin-right: 0;
+}
+
+</style>
+
+<h2>Работа завершена</h2>
+
+<p><b>Студент:</b> {{ attempt.student.last_name }} {{ attempt.student.first_name }}</p>
+<p><b>Группа:</b> {{ attempt.student.group.name }}</p>
+<p><b>Название:</b>
+    {% if attempt.lab %}
+        {{ attempt.lab.title }}
+    {% elif attempt.protection %}
+        {{ attempt.protection.title }}
+    {% else %}
+        Неизвестно
+    {% endif %}
+</p>
+<!-- Строка с результатом удалена -->
+
+<ul class="answers">
+    {% for answer in answers %}
+    <li class="{{ answer[0] }}">{{ answer[1] }}</li>
+    {% endfor %}
+</ul>
+
+<p><b>Время завершения:</b> {{ attempt.finished_at }}</p>
+
+<hr>
+
+<h3 style="color: red; transform: rotate(-10deg); font-size: 24px;">
+    Хеш-подпись: {{ attempt.watermark_hash }}
+</h3>
+
+<p>Сделайте скриншот этой страницы и загрузите в Moodle.</p>
+
+</body>
+</html>
