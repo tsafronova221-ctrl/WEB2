@@ -22,12 +22,12 @@
 }
 
 /* Убираем цветовую индикацию для правильных и неправильных ответов */
-.answers li.correct, .answers li.wrong {
+.answers li.correct, .answers li.wrong, .answers li.neutral {
   border-color: #ddd;
   background: #f3f3f3;
 }
 
-.answers li.correct::before, .answers li.wrong::before {
+.answers li::before {
   content: "";
   margin-right: 0;
 }
@@ -37,7 +37,7 @@
 <h2>Работа завершена</h2>
 
 <p><b>Студент:</b> {{ attempt.student.last_name }} {{ attempt.student.first_name }}</p>
-<p><b>Группа:</b> {{ attempt.student.group.name }}</p>
+<p><b>Группа:</b> {{ attempt.student.group.name if attempt.student.group else 'Не указана' }}</p>
 <p><b>Название:</b>
     {% if attempt.lab %}
         {{ attempt.lab.title }}
@@ -51,7 +51,7 @@
 
 <ul class="answers">
     {% for answer in answers %}
-    <li class="{{ answer[0] }}">{{ answer[1] }}</li>
+    <li class="{{ answer[0] }}">{{ loop.index }}. {{ answer[1] }}</li>
     {% endfor %}
 </ul>
 

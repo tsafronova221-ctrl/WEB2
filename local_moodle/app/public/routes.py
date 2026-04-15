@@ -253,25 +253,15 @@ def start():
 def finish(attempt_id):
     attempt = Attempt.query.get_or_404(attempt_id)
     
-    # ===== ЗАЩИТА ОТ ПОВТОРНОЙ ОТПРАВКИ =====
-    # Если попытка уже была завершена (finished_at заполнено),
-    # то просто показываем страницу завершения с данными этой попытки
+    # === ЗАЩИТА ОТ ПОВТОРНОЙ ОТПРАВКИ И ПОДДЕЛКИ ДАННЫХ ===
+    # Проверяем, что попытка принадлежит текущему студенту и еще не завершена
     if attempt.finished_at is not None:
-        # Не создаем новую попытку, а просто показываем результаты старой
-        lab_file_id = attempt.password.file_id
-        correct_map = {
-            fqa.question_id: fqa.correct_answer
-            for fqa in FileQuestionAnswer.query.filter_by(lab_file_id=lab_file_id)
-        }
-
+        # Попытка уже завершена - показываем страницу результатов без правильных ответов
         results_list = []
         for answer_record in attempt.answers:
             q = answer_record.question
-            correct_text = (correct_map.get(q.id) or "").strip()
-            if answer_record.is_correct:
-                results_list.append(['correct', q.text])
-            else:
-                results_list.append(['wrong', q.text])
+            # Показываем только текст вопроса, без информации о правильности
+            results_list.append(['neutral', q.text])
         
         return render_template("public/finish.html", attempt=attempt, answers=results_list)
     # ========================================
@@ -311,9 +301,10 @@ def finish(attempt_id):
 
         if is_correct:
             score += 1
-            results_list.append(['correct', q.text])
+            # Не показываем какие ответы правильные/неправильные - просто нумеруем
+            results_list.append(['neutral', q.text])
         else:
-            results_list.append(['wrong', q.text])
+            results_list.append(['neutral', q.text])
 
         # Обновляем запись в БД
         answer_record.answer_text = ans_text

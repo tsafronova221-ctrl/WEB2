@@ -1,12 +1,9 @@
 import hashlib
-import secrets
 from config import Config
 
 
 def hash_password(p):
-    """Hash password with salt using SHA256"""
-    salt = Config.SECRET_KEY[:16]
-    return hashlib.sha256((salt + p).encode()).hexdigest()
+    return hashlib.sha256(p.encode()).hexdigest()
 
 
 def verify_password(plain, hashed):

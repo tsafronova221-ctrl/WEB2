@@ -1,45 +1,55 @@
-```gitignore
-# Python compiled files
-*.pyc
-__pycache__/
-
-# Database files
-*.db
+```
+# Compressed archives
+*.zip
 
 # Environment files
 .env
 .env.local
 *.env.*
 
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Editors
+.vscode/
+.idea/
+
 # Logs
 *.log
 
-# Dependencies
-.venv/
-venv/
-pip-log.txt
-pip-selfcheck.json
-
-# IDE and editor files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# OS generated files
 .DS_Store
 Thumbs.db
 
 # Coverage reports
-.coverage
-htmlcov/
 coverage/
+htmlcov/
+*.coverage
 
-# Mypy cache
-.mypy_cache/
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
 
-# Pytest cache
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Testing
 .pytest_cache/
-
-# Alembic migration cache
-migrations/versions/__pycache__/
+.mypy_cache/
 ```

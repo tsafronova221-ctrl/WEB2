@@ -1,14 +1,13 @@
-﻿from flask import render_template, request, redirect, url_for, jsonify
+﻿from flask import render_template, request, redirect, url_for
 from flask_login import login_user, logout_user, login_required, UserMixin
 
 from .__blueprint__ import auth_bp
 from app import login_manager
-from app.security import hash_password
 
 
 USERS = {
-    "admin": hash_password("admin123"),
-    "teacher": hash_password("teacher123"),
+    "admin": "!!FaKe@@_L0l_m@y!!!!FaKe@@_L0l_m@y!!",
+    "teacher": "!!FaKe@@_L0l_m@y!!!!FaKe@@_L0l_m@y!!",
 }
 
 
@@ -23,7 +22,7 @@ def login():
         username = request.form.get("username")
         password = request.form.get("password")
 
-        if username in USERS and verify_password(password, USERS[username]):
+        if username in USERS and USERS[username] == password:
             user = SimpleUser(username)
             login_user(user)
             return redirect(url_for("admin.index"))
@@ -31,11 +30,6 @@ def login():
         return render_template("admin/login.html", error="Неверный логин или пароль")
 
     return render_template("admin/login.html")
-
-
-def verify_password(plain, hashed):
-    from app.security import hash_password
-    return hash_password(plain) == hashed
 
 
 @auth_bp.route("/logout")
