@@ -1,4 +1,45 @@
-```
-# Compressed files
-*.zip
+```gitignore
+# Python compiled files
+*.pyc
+__pycache__/
+
+# Database files
+*.db
+
+# Environment files
+.env
+.env.local
+*.env.*
+
+# Logs
+*.log
+
+# Dependencies
+.venv/
+venv/
+pip-log.txt
+pip-selfcheck.json
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Coverage reports
+.coverage
+htmlcov/
+coverage/
+
+# Mypy cache
+.mypy_cache/
+
+# Pytest cache
+.pytest_cache/
+
+# Alembic migration cache
+migrations/versions/__pycache__/
 ```
