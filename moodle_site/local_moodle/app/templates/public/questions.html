@@ -138,6 +138,8 @@ window.ANTICHEAT_CONFIG = {
     serverStartTime: {{ attempt.started_at.timestamp() * 1000 }}
 };
 </script>
-<script src="{{ url_for('static', filename='js/anticheat.js') }}"></script>
+{% if lab.is_test %}
+<script src="{{ url_for('static', filename='js/anticheat.min.js') }}"></script>
+{% endif %}
 </body>
 </html>
