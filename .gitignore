@@ -21,30 +21,66 @@ wheels/
 .installed.cfg
 *.egg
 
-# Virtual environments
-venv/
-ENV/
-env/
-.venv/
-env.bak/
-venv.bak/
-
 # Database
 instance/app.db
 
-# Environment variables
+# Environment
 .env
 .env.local
-.env.*
+*.env
 
 # IDE
 .vscode/
 .idea/
 
-# Logs
-*.log
-
 # OS
 .DS_Store
 Thumbs.db
+
+# Logs
+*.log
+
+# Temp files
+*.tmp
+*.swp
+
+# Coverage
+.coverage
+htmlcov/
+coverage/
+
+# Mypy
+.mypy_cache/
+
+# Pytest
+.pytest_cache/
+
+# Alembic
+alembic/
+
+# Compiled Python
+*.pyc
+*.pyo
+*.pyd
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 ```

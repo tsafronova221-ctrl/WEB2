@@ -1,0 +1,1063 @@
+{% extends "admin/base.html" %}
+
+{% block styles %}
+<style>
+    /* Общие стили */
+    .container {
+        max-width: 1400px;
+    }
+    
+    .lab-card {
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+        transition: transform 0.3s ease;
+    }
+    
+    .lab-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .card-header {
+        font-weight: 600;
+        border-top-left-radius: 12px !important;
+        border-top-right-radius: 12px !important;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    /* Заголовки */
+    h1 {
+        font-weight: 700;
+        color: #212529;
+        margin-bottom: 1.5rem;
+        position: relative;
+        padding-bottom: 0.5rem;
+    }
+    
+    h1::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 80px;
+        height: 3px;
+        background: linear-gradient(90deg, #007bff, #00d2ff);
+        border-radius: 2px;
+    }
+    
+    h2 {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 1rem;
+    }
+    
+    /* Кнопки */
+    .btn {
+        transition: all 0.3s ease;
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 0.6rem 1.2rem;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(90deg, #007bff, #00d2ff);
+        border: none;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 123, 255, 0.4);
+    }
+    
+    .btn-success {
+        background: linear-gradient(90deg, #28a745, #20c997);
+        border: none;
+    }
+    
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+    }
+    
+    .btn-danger {
+        background: linear-gradient(90deg, #dc3545, #ff6b6b);
+        border: none;
+    }
+    
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+    }
+    
+    .btn-warning {
+        background: linear-gradient(90deg, #ffc107, #ffda79);
+        border: none;
+        color: #212529;
+    }
+    
+    .btn-warning:hover {
+        transform: translateY(-2px);
+    }
+    
+    /* Формы и инпуты */
+    .form-label {
+        font-weight: 500;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        padding: 0.6rem 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+    }
+    
+    .form-text {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    
+    /* Мультивыбор групп */
+    .groups-container {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1rem;
+        background-color: #f8f9fa;
+    }
+    
+    .form-check {
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-check-input:checked {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+    
+    /* Загрузка файлов */
+    .dropzone {
+        border: 3px dashed #ced4da;
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        background-color: #f8f9fa;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        margin-bottom: 1rem;
+    }
+    
+    .dropzone:hover, .dropzone.drag-over {
+        border-color: #007bff;
+        background-color: #e3f2fd;
+    }
+    
+    .dropzone i {
+        font-size: 2.5rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+    
+    .file-preview {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 1rem;
+    }
+
+    .file-item {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 0.8rem;
+        display: flex;
+        align-items: center;
+        width: calc(25% - 10px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .file-icon {
+        font-size: 1.5rem;
+        color: #007bff;
+        margin-right: 10px;
+    }
+
+    .file-info {
+        flex-grow: 1;
+    }
+
+    .file-name {
+        font-weight: 500;
+        font-size: 0.9rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .file-size {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+
+    .remove-file {
+        background: none;
+        border: none;
+        color: #dc3545;
+        cursor: pointer;
+        font-size: 1.2rem;
+    }
+
+    /* Вопросы */
+    .question-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border-left: 4px solid #007bff;
+        transition: all 0.3s ease;
+    }
+
+    .question-card:hover {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .question-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .question-number {
+        background: #007bff;
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+
+    .question-content {
+        margin-bottom: 1rem;
+    }
+
+    .question-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    
+    /* Прогресс-бар для загрузки */
+    .progress {
+        height: 8px;
+        border-radius: 4px;
+        margin-top: 0.5rem;
+        display: none;
+    }
+    
+    .progress-bar {
+        background: linear-gradient(90deg, #007bff, #00d2ff);
+    }
+    
+    /* Анимации */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.4s ease forwards;
+    }
+    
+    @keyframes flash {
+        0% { background-color: #fff3cd; }
+        50% { background-color: #ffeeba; }
+        100% { background-color: #fff; }
+    }
+    
+    .flash-highlight {
+        animation: flash 1.5s ease;
+    }
+    
+    /* Действия */
+    .action-buttons {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+        justify-content: center;
+    }
+    
+    /* Респонсивность */
+    @media (max-width: 768px) {
+        .file-item {
+            width: calc(50% - 10px);
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .btn {
+            width: 100%;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .file-item {
+            width: 100%;
+        }
+    }
+    
+    /* Уведомления */
+    .notification {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+        max-width: 400px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        background-color: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        padding: 1rem;
+        color: #212529;
+    }
+
+    .notification.alert-success {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+
+    .notification.alert-danger {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+
+    .notification.alert-warning {
+        background-color: #fff3cd;
+        border-color: #ffeeba;
+        color: #856404;
+    }
+
+    .notification.alert-info {
+        background-color: #d1ecf1;
+        border-color: #bee5eb;
+        color: #0c5460;
+    }
+    
+    /* Валидация */
+    .is-invalid {
+        border-color: #dc3545 !important;
+    }
+    
+    .invalid-feedback {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">
+        <i class="fas fa-flask me-2"></i>Создание лабораторной работы
+    </h1>
+
+    <div class="lab-card fade-in">
+        <div class="card-header bg-primary text-white">
+            <h2 class="h5 mb-0">Основная информация</h2>
+        </div>
+        <div class="card-body">
+            <form id="labForm">
+                <div class="row g-3">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label for="labName" class="form-label">Название работы <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="labName" name="lab_name" required
+                               placeholder="Контрольная работа №1">
+                        <div class="invalid-feedback" id="labNameError"></div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Тип работы</label>
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" id="isTest" onchange="toggleTestMode()">
+                            <label class="form-check-label" for="isTest" id="isTestLabel">Лабораторная работа</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3" id="questionsCountBlock" style="display: none;">
+                <div class="col-md-12">
+                    <div class="alert alert-warning d-flex align-items-center">
+                        <i class="fas fa-random me-2"></i>
+                        <div>
+                            <label class="form-label mb-0 fw-bold">Количество случайных вопросов для студента:</label>
+                            <input type="number" class="form-control d-inline-block ms-2" style="width: 100px;"
+                                   id="questionsCount" min="1" value="3">
+                            <span class="text-muted ms-2 small">(из общего пула добавленных ниже вопросов)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <script> function toggleTestMode() {
+                const isTest = document.getElementById('isTest').checked;
+                const label = document.getElementById('isTestLabel');
+                const countBlock = document.getElementById('questionsCountBlock');
+
+                if (isTest) {
+                    label.textContent = "Контрольная работа (Random)";
+                    label.classList.add("text-danger", "fw-bold&");
+                    countBlock.style.display = "flex";
+                } else {
+                    label.textContent = "Лабораторная работа (Все вопросы)";
+                    label.classList.remove("text-danger&", "fw-bold");
+                    countBlock.style.display = "none";
+                }
+            }
+            </script>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="labStart" class="form-label">Дата начала <span class="text-danger">*</span></label>
+                        <input type="datetime-local" class="form-control" id="labStart" name="lab_start" required>
+                        <div class="invalid-feedback" id="labStartError"></div>
+                    </div>
+                </div>
+
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="labDeadline" class="form-label">Срок выполнения <span class="text-danger">*</span></label>
+                            <input type="datetime-local" class="form-control" id="labDeadline" name="lab_deadline" required>
+                            <div class="invalid-feedback" id="labDeadlineError"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Учебные группы <span class="text-danger">*</span></label>
+                            <div class="groups-container" id="groupsContainer">
+                                <!-- Группы будут загружены динамически -->
+                                {% for group in groups %}
+                                <div class="form-check">
+                                    <input class="form-check-input group-checkbox" type="checkbox" 
+                                           value="{{ group.id }}" id="group{{ group.id }}" name="groups[]">
+                                    <label class="form-check-label" for="group{{ group.id }}">
+                                        {{ group.name }} 
+                                        {% if group.size > 0 %}
+                                        <span class="badge bg-success ms-1">{{ group.size }}</span>
+                                        {% endif %}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                                {% if not groups %}
+                                <div class="text-center text-muted py-2">
+                                    <i class="fas fa-users fa-2x mb-2"></i>
+                                    <p>Нет доступных групп</p>
+                                    <small class="text-muted">Сначала создайте учебные группы</small>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="invalid-feedback" id="groupsError" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="labDescription" class="form-label">Описание задания</label>
+                    <textarea class="form-control" id="labDescription" name="lab_description" rows="4"
+                              placeholder="Опишите задание для студентов..."></textarea>
+                    <small class="form-text text-muted">Максимальная длина: 1000 символов</small>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="lab-card fade-in" style="animation-delay: 0.1s;">
+        <div class="card-header bg-info text-white">
+            <h2 class="h5 mb-0">Файлы заданий (варианты)</h2>
+        </div>
+        <div class="card-body">
+            <div class="mb-4">
+                <div class="dropzone" id="dropzone">
+                    <i class="fas fa-cloud-upload-alt text-primary"></i>
+                    <h4 class="mb-2">Перетащите файлы сюда</h4>
+                    <p class="text-muted mb-1">Или нажмите для выбора файлов</p>
+                    <input type="file" id="fileInput" multiple style="display: none;">
+                </div>
+                <div class="progress">
+                    <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div class="file-preview" id="filePreview">
+                <!-- Файлы будут отображаться здесь -->
+            </div>
+
+        </div>
+    </div>
+
+    <div class="lab-card fade-in" style="animation-delay: 0.2s;">
+        <div class="card-header bg-warning text-white">
+            <h2 class="h5 mb-0">Вопросы для проверки</h2>
+            <button class="btn btn-sm btn-light" onclick="addQuestion()">
+                <i class="fas fa-plus me-1"></i> Добавить вопрос
+            </button>
+        </div>
+        <div class="card-body">
+            <div id="questionsContainer">
+                <!-- Вопросы будут добавляться здесь -->
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-question-circle fa-3x mb-3"></i>
+                    <p class="h5">Нет вопросов</p>
+                    <p class="text-muted">Нажмите кнопку выше, чтобы добавить первый вопрос</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="action-buttons fade-in" style="animation-delay: 0.3s;">
+        <button type="button" class="btn btn-success btn-lg" onclick="saveLab()">
+            <i class="fas fa-save me-2"></i>Сохранить лабораторную работу
+        </button>
+        <button type="button" class="btn btn-warning btn-lg" onclick="resetForm()">
+            <i class="fas fa-redo me-2"></i>Сбросить форму
+        </button>
+    </div>
+</div>
+
+
+<script>
+    // Глобальные переменные
+    let files = [];
+    let questions = [];
+    let questionCounter = 1;
+    
+    // Инициализация при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        // Настройка dropzone
+        setupDropzone();
+        
+        // Добавить первый вопрос при загрузке страницы
+        addQuestion();
+        
+        // Установить минимальную дату для deadline (сегодня + 1 день)
+        const now = new Date();
+        now.setDate(now.getDate() + 1);
+        const minDate = now.toISOString().slice(0, 16);
+        document.getElementById('labDeadline').min = minDate;
+        document.getElementById('labDeadline').value = minDate;
+
+    });
+    
+    // Настройка dropzone для загрузки файлов
+    function setupDropzone() {
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        
+        dropzone.addEventListener('click', () => fileInput.click());
+        
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('drag-over');
+        });
+        
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('drag-over');
+        });
+        
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('drag-over');
+            
+            const droppedFiles = e.dataTransfer.files;
+            handleFiles(droppedFiles);
+        });
+        
+        fileInput.addEventListener('change', () => {
+            handleFiles(fileInput.files);
+        });
+    }
+    
+    // Обработка файлов
+    function handleFiles(fileList) {
+        
+        Array.from(fileList).forEach(file => {
+            
+            // Проверка на дубликаты
+            if (files.some(f => f.name === file.name)) {
+                showNotification(`Файл "${file.name}" уже добавлен`, 'info');
+                return;
+            }
+            
+            // Добавление файла
+            files.push(file);
+            const fileIndex = files.length - 1;
+            questions.forEach(q => {
+                if (!q.answers) q.answers = {};
+                q.answers[fileIndex] = q.answers[fileIndex] || '';
+            });
+            renderQuestions();  // новая функция рендера вопросов
+
+            renderFilePreview();
+        });
+        
+        // Очистка input для возможности повторной загрузки одинаковых файлов
+        document.getElementById('fileInput').value = '';
+    }
+    
+    // Отображение превью файлов
+    function renderFilePreview() {
+        const previewContainer = document.getElementById('filePreview');
+        
+        if (files.length === 0) {
+            previewContainer.innerHTML = '<div class="text-center text-muted py-3">Нет загруженных файлов</div>';
+            return;
+        }
+        
+        let html = '';
+        files.forEach((file, index) => {
+            const fileSize = formatFileSize(file.size);
+            
+            html += `
+                <div class="file-item fade-in" style="animation-delay: ${index * 0.05}s;">
+                    <div class="file-info">
+                        <div class="file-name" title="${file.name}">${file.name}</div>
+                        <div class="file-size">${fileSize}</div>
+                    </div>
+                    <button class="remove-file" onclick="removeFile(${index})">
+                        <i class="fas fa-times"></i>🗑️
+                    </button>
+                </div>
+            `;
+        });
+        
+        previewContainer.innerHTML = html;
+
+    }
+    
+    // Форматирование размера файла
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    
+    // Удаление файла
+    function removeFile(index) {
+        files.splice(index, 1);
+        // сдвигаем ответы по индексам
+        questions.forEach(q => {
+            const newAnswers = {};
+            Object.entries(q.answers || {}).forEach(([idx, val]) => {
+                const i = parseInt(idx);
+                if (i === index) return;          // удалённый файл
+                if (i > index) {
+                    newAnswers[i - 1] = val;      // сдвиг
+                } else {
+                    newAnswers[i] = val;
+                }
+            });
+            q.answers = newAnswers;
+        });
+        renderQuestions();
+
+        renderFilePreview();
+    }
+
+    function renderQuestions() {
+    const container = document.getElementById('questionsContainer');
+
+    if (questions.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-muted py-4">
+                <i class="fas fa-question-circle fa-3x mb-3"></i>
+                <p class="h5">Нет вопросов</p>
+                <p class="text-muted">Нажмите кнопку выше, чтобы добавить первый вопрос</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = '';
+    questions.forEach((q, qIndex) => {
+        html += `
+        <div class="question-card fade-in" id="${q.id}" style="animation-delay: ${(qIndex + 1) * 0.1}s;">
+            <div class="question-header">
+                <div class="question-number">${qIndex + 1}</div>
+                <div class="question-actions">
+                    <button class="btn btn-sm btn-danger" onclick="removeQuestion('${q.id}')">
+                        <i class="fas fa-trash-alt"></i>🗑️
+                    </button>
+                </div>
+            </div>
+            <div class="question-content">
+                <div class="mb-3">
+                    <label class="form-label">Текст вопроса <span class="text-danger">*</span></label>
+                    <textarea class="form-control question-text"
+                              data-question-id="${q.id}"
+                              rows="3"
+                              placeholder="Введите вопрос для проверки...">${q.text || ''}</textarea>
+                    <div class="invalid-feedback question-error"></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Правильные ответы по файлам</label>
+        `;
+
+        if (files.length === 0) {
+            html += `<div class="text-muted">Сначала добавьте файлы заданий</div>`;
+        } else {
+            html += `<div class="row g-2">`;
+            files.forEach((file, fileIndex) => {
+                const val = (q.answers && q.answers[fileIndex]) || '';
+                html += `
+                <div class="col-md-6">
+                    <label class="form-label small text-muted">
+                        Вариант: ${file.name}
+                    </label>
+                    <textarea class="form-control correct-answer"
+                              data-question-id="${q.id}"
+                              data-file-index="${fileIndex}"
+                              rows="2"
+                              placeholder="Ответ для этого файла">${val}</textarea>
+                </div>`;
+            });
+            html += `</div>`;
+        }
+
+        html += `
+                </div>
+            </div>
+        </div>
+        `;
+    });
+
+    container.innerHTML = html;
+
+    // навешиваем обработчики для сохранения в questions[]
+    document.querySelectorAll('.question-text').forEach(el => {
+        el.addEventListener('input', e => {
+            const qid = e.target.dataset.questionId;
+            const q = questions.find(q => q.id === qid);
+            if (q) q.text = e.target.value;
+        });
+    });
+
+    document.querySelectorAll('.correct-answer').forEach(el => {
+        el.addEventListener('input', e => {
+            const qid = e.target.dataset.questionId;
+            const fileIndex = parseInt(e.target.dataset.fileIndex);
+            const q = questions.find(q => q.id === qid);
+            if (!q.answers) q.answers = {};
+            q.answers[fileIndex] = e.target.value;
+        });
+    });
+}
+
+    
+    // Добавление вопроса
+    function addQuestion() {
+    const questionId = `question-${questionCounter}`;
+
+    questions.push({
+        id: questionId,
+        number: questionCounter,
+        text: '',
+        answers: {}
+    });
+
+    // создаём слоты ответов под уже добавленные файлы
+    files.forEach((_, idx) => {
+        questions[questions.length - 1].answers[idx] = '';
+    });
+
+    questionCounter++;
+    renderQuestions();
+}
+
+
+    
+    // Удаление вопроса
+    function removeQuestion(questionId) {
+        if (questions.length <= 1) {
+            showNotification('Должен остаться хотя бы один вопрос', 'warning');
+            return;
+        }
+        
+        const questionElement = document.getElementById(questionId);
+        if (questionElement) {
+            questionElement.classList.add('fade-out');
+            setTimeout(() => {
+                questionElement.remove();
+                questions = questions.filter(q => q.id !== questionId);
+                renumberQuestions();
+            }, 300);
+        }
+    }
+    
+    // Перенумерация вопросов
+    function renumberQuestions() {
+        const questionCards = document.querySelectorAll('.question-card');
+        questionCards.forEach((card, index) => {
+            const numberElement = card.querySelector('.question-number');
+            numberElement.textContent = index + 1;
+        });
+        
+        // Обновляем номера в массиве
+        questions.forEach((q, index) => {
+            q.number = index + 1;
+        });
+    }
+
+    
+    // Валидация формы
+    function validateForm() {
+        let isValid = true;
+        
+        // Валидация названия
+        const labName = document.getElementById('labName').value.trim();
+        const labNameError = document.getElementById('labNameError');
+        if (labName.length < 5 || labName.length > 100) {
+            labNameError.textContent = 'Название должно быть от 5 до 100 символов';
+            document.getElementById('labName').classList.add('is-invalid');
+            isValid = false;
+        } else {
+            labNameError.textContent = '';
+            document.getElementById('labName').classList.remove('is-invalid');
+        }
+
+        // Валидация даты начала
+        const labStart = document.getElementById('labStart').value;
+        const labStartError = document.getElementById('labStartError');
+        const startDate = new Date(labStart);
+
+        if (!labStart || startDate <= new Date()) {
+            labStartError.textContent = 'Дата начала должна быть позже текущего времени';
+            document.getElementById('labStart').classList.add('is-invalid');
+            isValid = false;
+        } else {
+            labStartError.textContent = '';
+            document.getElementById('labStart').classList.remove('is-invalid');
+        }
+
+        
+        // Валидация дедлайна
+        const labDeadline = document.getElementById('labDeadline').value;
+        const labDeadlineError = document.getElementById('labDeadlineError');
+        const deadlineDate = new Date(labDeadline);
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - 5); // Учитываем небольшой запас
+        
+        if (!labDeadline || deadlineDate <= now) {
+            labDeadlineError.textContent = 'Выберите корректную дату и время (не ранее текущего)';
+            document.getElementById('labDeadline').classList.add('is-invalid');
+            isValid = false;
+        } else {
+            labDeadlineError.textContent = '';
+            document.getElementById('labDeadline').classList.remove('is-invalid');
+        }
+        
+        // Валидация групп
+        const selectedGroups = document.querySelectorAll('.group-checkbox:checked');
+        const groupsError = document.getElementById('groupsError');
+        if (selectedGroups.length === 0) {
+            groupsError.textContent = 'Выберите хотя бы одну группу';
+            groupsError.style.display = 'block';
+            isValid = false;
+        } else {
+            groupsError.textContent = '';
+            groupsError.style.display = 'none';
+        }
+        
+        // Валидация файлов
+        if (files.length === 0) {
+            showNotification('Добавьте хотя бы один файл', 'warning');
+            isValid = false;
+        }
+        
+        // Валидация вопросов
+        const questionCards = document.querySelectorAll('.question-card');
+        questionCards.forEach((card, index) => {
+            const textArea = card.querySelector('.question-text');
+            const errorElement = card.querySelector('.question-error');
+            
+            if (!textArea.value.trim()) {
+                errorElement.textContent = 'Введите текст вопроса';
+                textArea.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                errorElement.textContent = '';
+                textArea.classList.remove('is-invalid');
+            }
+        });
+        
+        return isValid;
+    }
+
+   function getBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+    
+    // Сохранение лабораторной работы
+    async function saveLab() {
+        if (!validateForm()) {
+            showNotification('Пожалуйста, исправьте ошибки в форме', 'danger');
+            return;
+        }
+
+        const filesBase64 = await Promise.all(
+            files.map(async file => ({
+                name: file.name,
+                base64: await getBase64(file)
+            }))
+        );
+        
+        // Сбор данных
+        const labData = {
+            name: document.getElementById('labName').value.trim(),
+            start_date: document.getElementById('labStart').value,
+            deadline: document.getElementById('labDeadline').value,
+            description: document.getElementById('labDescription').value.trim(),
+            is_test: document.getElementById("isTest").checked,
+            questions_count: parseInt(document.getElementById("questionsCount").value) || 0,
+            groups: Array.from(document.querySelectorAll('.group-checkbox:checked')).map(cb => cb.value),
+            files: filesBase64,
+            questions: questions.map((q, index) => ({
+                number: index + 1,
+                text: q.text.trim(),
+                answers: Object.entries(q.answers || {})
+                    .filter(([_, val]) => (val || '').trim() !== '')
+                    .map(([fileIndex, val]) => ({
+                        file_index: parseInt(fileIndex),
+                        correct_answer: val.trim()
+                    }))
+            }))
+        };
+        
+        fetch('./create_lab', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json;charset=utf-8',
+                },
+                body: JSON.stringify(labData),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Лабораторная работа успешно сохранена!', 'success');
+                    resetForm(true)
+                } else {
+                    showNotification(data.error || 'Ошибка при сохранении ЛР', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification(data.error || 'Ошибка при сохранении ЛР', 'danger');
+            });
+    }
+    
+    // Сброс формы
+    function resetForm(force=false) {
+        if (force || confirm('Вы уверены, что хотите сбросить форму? Все несохраненные данные будут потеряны.')) {
+            document.getElementById('labForm').reset();
+            files = [];
+            questions = [];
+            questionCounter = 1;
+            renderFilePreview();
+            
+            // Очистка вопросов
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = `
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-question-circle fa-3x mb-3"></i>
+                    <p class="h5">Нет вопросов</p>
+                    <p class="text-muted">Нажмите кнопку выше, чтобы добавить первый вопрос</p>
+                </div>
+            `;
+            
+            // Добавить первый вопрос
+            addQuestion();
+            if (!force) {
+                showNotification('Форма сброшена', 'info');
+            }
+        }
+    }
+    
+    // Показать уведомление
+    function showNotification(message, type) {
+        let alertType = 'alert-info';
+        let icon = 'fa-info-circle';
+        
+        switch(type) {
+            case 'success':
+                alertType = 'alert-success';
+                icon = 'fa-check-circle';
+                break;
+            case 'danger':
+                alertType = 'alert-danger';
+                icon = 'fa-exclamation-circle';
+                break;
+            case 'warning':
+                alertType = 'alert-warning';
+                icon = 'fa-exclamation-triangle';
+                break;
+            case 'info':
+                alertType = 'alert-info';
+                icon = 'fa-info-circle';
+                break;
+        }
+        
+        const notification = document.createElement('div');
+        notification.className = `alert ${alertType} alert-dismissible fade show notification`;
+        notification.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="fas ${icon} me-2 fs-5"></i>
+                <div>${message}</div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Автоматическое скрытие через 5 секунд
+        setTimeout(() => {
+            notification.classList.remove('show');
+            notification.classList.add('fade');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 5000);
+    }
+</script>
+{% endblock %}

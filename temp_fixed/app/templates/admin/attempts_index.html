@@ -1,0 +1,109 @@
+{% extends "admin/base.html" %}
+
+{% block styles %}
+<style>
+    h1 {
+        margin-bottom: 1.5rem;
+        color: #2c3e50;
+    }
+
+    .card {
+        background: #fff;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+
+    select {
+        padding: 10px;
+        width: 100%;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        margin-bottom: 1.5rem;
+        font-size: 1rem;
+    }
+
+    .group-item {
+        padding: 12px 15px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .group-item:last-child {
+        border-bottom: none;
+    }
+
+    .btn {
+        padding: 8px 14px;
+        border-radius: 4px;
+        text-decoration: none;
+        color: white;
+        background-color: #3498db;
+        transition: background-color 0.2s;
+    }
+
+    .btn:hover {
+        background-color: #2980b9;
+    }
+
+    .hidden {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>Просмотр попыток студентов</h1>
+
+<div class="card">
+    <h2 style="margin-bottom: 1rem;">Выберите лабораторную работу</h2>
+
+    <select id="labSelect">
+        <option value="">— Выберите лабораторную —</option>
+        {% for lab in labs %}
+            <option value="{{ lab.id }}">{{ lab.title }}</option>
+        {% endfor %}
+    </select>
+
+    {% for lab in labs %}
+        <div class="groups-block hidden" id="lab-{{ lab.id }}">
+            <h3 style="margin-bottom: 1rem;">Группы лабораторной: {{ lab.title }}</h3>
+
+            {% if lab.groups %}
+                {% for group in lab.groups %}
+                    <div class="group-item">
+                        <div>
+                            <strong>{{ group.name }}</strong>
+                            <span style="color: #777; margin-left: 10px;">({{ group.size }} студентов)</span>
+                        </div>
+
+                        <a class="btn"
+                           href="{{ url_for('admin.admin_labs.group_attempts', lab_id=lab.id, group_id=group.id) }}">
+                            Смотреть попытки
+                        </a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p style="color: #777;">Нет привязанных групп.</p>
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>
+
+<script>
+    const select = document.getElementById("labSelect");
+    const blocks = document.querySelectorAll(".groups-block");
+
+    select.addEventListener("change", () => {
+        blocks.forEach(b => b.classList.add("hidden"));
+        const id = select.value;
+        if (id) {
+            document.getElementById("lab-" + id).classList.remove("hidden");
+        }
+    });
+</script>
+
+{% endblock %}
