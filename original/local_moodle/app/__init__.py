@@ -4,11 +4,20 @@ import os
 from flask import Flask, redirect, url_for, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask_login import LoginManager, current_user
+from flask_login import LoginManager, current_user, UserMixin
 
 login_manager = LoginManager()
 db = SQLAlchemy()
 migrate = Migrate()
+
+
+@login_manager.user_loader
+def load_user(username):
+    """Загрузчик пользователя для Flask-Login"""
+    from .public.auth.auth import USERS, SimpleUser
+    if username in USERS:
+        return SimpleUser(username)
+    return None
 
 
 def create_app():
